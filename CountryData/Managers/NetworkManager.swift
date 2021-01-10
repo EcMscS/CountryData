@@ -8,6 +8,7 @@
 
 import UIKit
 import Foundation
+import SwiftDraw
 
 class NetworkManager {
     
@@ -58,18 +59,53 @@ class NetworkManager {
             
             do {
                 let decoder = JSONDecoder()
-                //decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let countries = try decoder.decode([Country].self, from: data)
-                print("Number of Countries: \(countries.count)")
                 completed(.success(countries))
             } catch {
-                print("Data is invalid; \(String(describing: error))")
                 completed(.failure(.invalidData))
             }
         }
         
         task.resume()
     }
-
     
+    func downloadFlagImage(from urlString: String, completed: @escaping(UIImage?) -> Void) {
+        
+        let cacheKey = NSString(string: urlString)
+       
+        if let image = cache.object(forKey: cacheKey) {
+            completed(image)
+            return
+        }
+        
+        guard let url = URL(string: urlString) else {
+            completed(nil)
+            return
+        }
+        
+        let task = URLSession.shared.dataTask(with: url) { [weak self] data, response, error in
+            
+            guard let flagImage = Image(fileURL: url) else {
+                return
+            }
+            
+            //Error Checking
+            guard let self = self,
+                error == nil,
+                let response = response as? HTTPURLResponse, response.statusCode == 200,
+                let _ = data,
+                let image = flagImage.pdfImage() else {
+                    completed(nil)
+                    return
+                }
+            
+            //Set image into cache
+            self.cache.setObject(image, forKey: cacheKey)
+            
+            completed(image)
+        }
+        task.resume()
+    }
 }
+
+

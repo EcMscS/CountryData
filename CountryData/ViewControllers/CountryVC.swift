@@ -11,9 +11,9 @@ import UIKit
 class CountryVC: UIViewController {
     
     var countryCollectionView: UICollectionView!
-    var countryTableView: UITableView!
+    var countryTableView = UITableView()
     var countries: [Country] = []
-    let cellReuseIdentifier = "countryCell"
+    //let cellReuseIdentifier = "countryCell"
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -30,7 +30,6 @@ class CountryVC: UIViewController {
             
             switch result {
             case .success(let countries):
-                print("Countries: \(countries.count)")
                 self.countries.append(contentsOf: countries)
                 
                 DispatchQueue.main.async {
@@ -49,7 +48,7 @@ class CountryVC: UIViewController {
     
     private func configureNavBar() {
         title = NSLocalizedString("Countries of the World", comment: "")
-        navigationController?.navigationBar.prefersLargeTitles = true
+        //navigationController?.navigationBar.prefersLargeTitles = true
         navigationController?.navigationBar.isTranslucent = true
     }
     
@@ -75,20 +74,23 @@ class CountryVC: UIViewController {
     }
     
     private func configureTableView() {
-        countryTableView = UITableView(frame: view.bounds, style: .grouped)
-        
+        view.addSubview(countryTableView)
+        countryTableView.frame = view.bounds
         countryTableView.delegate = self
         countryTableView.dataSource = self
         countryTableView.allowsSelection = true
         countryTableView.backgroundColor = UIColor.systemBackground
-        view.addSubview(countryTableView)
+        countryTableView.rowHeight = 100
+        countryTableView.removeExcessCells()
         
-        NSLayoutConstraint.activate([
-            countryTableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
-            countryTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
-            countryTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
-            countryTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
-        ])
+        countryTableView.register(CountryTableViewCell.self, forCellReuseIdentifier: CountryTableViewCell.reuseID)
+        
+//        NSLayoutConstraint.activate([
+//            countryTableView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 0),
+//            countryTableView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: 20),
+//            countryTableView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -20),
+//            countryTableView.bottomAnchor.constraint(equalTo: view.safeAreaLayoutGuide.bottomAnchor, constant: -20)
+//        ])
     }
     
 }
@@ -111,12 +113,21 @@ extension CountryVC: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = (tableView.dequeueReusableCell(withIdentifier: cellReuseIdentifier) ?? UITableViewCell()) as UITableViewCell
-        cell.textLabel?.text = self.countries[indexPath.row].name
+        //let cell = (tableView.dequeueReusableCell(withIdentifier: cellReuseIdentifier) ?? UITableViewCell()) as UITableViewCell
+        //cell.textLabel?.text = self.countries[indexPath.row].name
+        
+        let cell = tableView.dequeueReusableCell(withIdentifier: CountryTableViewCell.reuseID) as! CountryTableViewCell
+        let currentCountry = countries[indexPath.row]
+        cell.set(country: currentCountry)
         return cell
     }
     
-
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let country = countries[indexPath.row]
+        let destVC = CountryDetailVC(country: country)
+        
+        navigationController?.pushViewController(destVC, animated: true)
+    }
     
 
 }
